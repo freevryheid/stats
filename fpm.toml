@@ -9,5 +9,8 @@ copyright = "Copyright 2021, Andre Smit"
 stdlib.git = "https://github.com/fortran-lang/stdlib"
 stdlib.branch = "stdlib-fpm"
 
+[dev-dependencies]
+test-drive.git = "https://github.com/fortran-lang/test-drive"
+
 [install]
 library = true

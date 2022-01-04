@@ -4,6 +4,7 @@ module stats
 
   use stdlib_kinds, only: int32, dp
   implicit none
+  private
 
   type                             :: acc
     integer(int32)                 :: n    = 0
@@ -23,10 +24,10 @@ module stats
 
   end type
 
-  private
+  ! private
   ! public                           :: push_real, push_int, push_reala, push_inta
-  public                           :: push
-  public                           :: acc, clear, mean, var, vars, std, stds, skew, skews, kurt, kurts, show
+  ! public                           :: push
+  public                           :: acc !, clear, mean, var, vars, std, stds, skew, skews, kurt, kurts, show
 
   contains
 
