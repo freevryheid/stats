@@ -6,7 +6,7 @@ module stats
   implicit none
   private
 
-  type                             :: acc
+  type, public                     :: acc
     integer(int32)                 :: n    = 0
     real(dp)                       :: min  = 0
     real(dp)                       :: max  = 0
@@ -27,7 +27,7 @@ module stats
   ! private
   ! public                           :: push_real, push_int, push_reala, push_inta
   ! public                           :: push
-  public                           :: acc !, clear, mean, var, vars, std, stds, skew, skews, kurt, kurts, show
+  ! public                           :: acc !, clear, mean, var, vars, std, stds, skew, skews, kurt, kurts, show
 
   contains
 

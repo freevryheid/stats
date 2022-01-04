@@ -1,7 +1,7 @@
 module test_stats
   use stats
   use stdlib_kinds, only: int32, dp
-  use stdlib_stats, only: mean
+  use stdlib_stats, only: mean, var
   use testdrive, only : error_type, unittest_type, new_unittest, check
   implicit none
   private
@@ -15,11 +15,11 @@ module test_stats
       !> Collection of tests
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
-      testsuite = [new_unittest("general", test_general)]
+      testsuite = [new_unittest("mean", test_mean), new_unittest("variance", test_var)]
     end subroutine collect_stats
 
-    !> Check accumulator
-    subroutine test_general(error)
+    !> Check accumulator mean
+    subroutine test_mean(error)
       !> Error handling
       type(error_type), allocatable, intent(out) :: error
 
@@ -33,10 +33,34 @@ module test_stats
       avg1 = t%mean()
       avg2 = mean(x, 1)
 
-      call check(error, avg2, avg1, "Checking means")
+      ! call check(error, avg2, avg1, thr=real(1.e-8, dp))
+      call check(error, avg2, avg1, thr=epsilon(avg2)*100)
+      ! call check(error, avg2, avg1)
       if (allocated(error)) return
 
-    end subroutine test_general
+    end subroutine test_mean
+
+    !> Check accumulator variance
+    subroutine test_var(error)
+      !> Error handling
+      type(error_type), allocatable, intent(out) :: error
+
+      type (acc)     :: t
+      real(dp)       :: x(1000), var1, var2
+
+      call random_init(.false., .false.)
+      call random_number(x)
+      call t%push(x)
+
+      var1 = t%vars()
+      var2 = var(x, 1)
+
+      ! call check(error, avg2, avg1, thr=real(1.e-8, dp))
+      call check(error, var2, var1, thr=epsilon(var2)*100)
+      ! call check(error, avg2, avg1)
+      if (allocated(error)) return
+
+    end subroutine test_var
 
 end module test_stats
 
