@@ -1,8 +1,9 @@
 module stats
-  !> statistics accumulator
+  !> real64 statistics accumulator
   !> based on the nim std/stats module: https://nim-lang.org/docs/stats.html
 
   use stdlib_kinds, only: int32, dp
+
   implicit none
   private
 
@@ -18,21 +19,16 @@ module stats
 
     contains
 
-      procedure                    :: push_real, push_int, push_reala, push_inta
-      generic                      :: push => push_real, push_int, push_reala, push_inta
-      procedure                    :: clear, mean, var, vars, std, stds, skew, skews, kurt, kurts, show
+      procedure                    :: push_real, push_reala
+      generic                      :: push => push_real, push_reala
+      procedure                    :: clear, mean, vars, varp, stds, stdp, skews, skewp, kurts, kurtp, show
 
   end type
-
-  ! private
-  ! public                           :: push_real, push_int, push_reala, push_inta
-  ! public                           :: push
-  ! public                           :: acc !, clear, mean, var, vars, std, stds, skew, skews, kurt, kurts, show
 
   contains
 
     subroutine push_real(s, x)
-      !> pushes a real value x for processing.
+      !> pushes a real value x into the accumulator.
       class(acc), intent(inout)  :: s
       real(dp), intent(in)       :: x
       real(dp)                   :: m, p, delta, delta_n, delta_n2, term1
@@ -62,15 +58,8 @@ module stats
       s%mom1   = s%mom1+delta_n
     end subroutine push_real
 
-    subroutine push_int(s, i)
-      !> pushes an integer value x for processing.
-      class(acc), intent(inout)  :: s
-      integer(int32)             :: i
-      call s%push(real(i, dp))
-    end subroutine push_int
-
     subroutine push_reala(s, a)
-      !> pushes an array a for processing.
+      !> pushes a real array into the accumulator.
       class(acc), intent(inout)  :: s
       real(dp), intent(in)       :: a(:)
       integer(int32)             :: i, n
@@ -79,17 +68,6 @@ module stats
         call s%push(a(i))
       end do
     end subroutine push_reala
-
-    subroutine push_inta(s, b)
-      !> pushes an integer array b for processing.
-      class(acc), intent(inout)  :: s
-      integer(int32), intent(in) :: b(:)
-      integer(int32)             :: i, n
-      n = size(b)
-      do i = 1, n
-        call s%push(real(b(i), dp))
-      end do
-    end subroutine push_inta
 
     subroutine clear(s)
       !> rets accumulator.
@@ -111,8 +89,8 @@ module stats
       r = s%mom1
     end function mean
 
-    function var(s) result(r)
-      !> computes the current population variance of accumulator.
+    function varp(s) result(r)
+      !> computes the current population variance of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
       if (s%n > 1) then
@@ -120,10 +98,10 @@ module stats
       else
         r = 0
       end if
-    end function var
+    end function varp
 
     function vars(s) result(r)
-      !> computes the current sample variance of accumulator.
+      !> computes the current sample variance of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
       if (s%n > 1) then
@@ -133,48 +111,52 @@ module stats
       end if
     end function vars
 
-    function std(s) result(r)
-      !> computes the current population standard deviation of accumulator.
+    function stdp(s) result(r)
+      !> computes the current population standard deviation of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
-      r = sqrt(var(s))
-    end function std
+      r = sqrt(varp(s))
+    end function stdp
 
     function stds(s) result(r)
-      !> computes the current sample standard deviation of accumulator.
+      !> computes the current sample standard deviation of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
       r = sqrt(vars(s))
     end function stds
 
-    function skew(s) result(r)
-      !> computes the current population skewness of accumulator.
+    function skewp(s) result(r)
+      !> computes the current population skewness of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
       r = sqrt(real(s%n, dp))*s%mom3/s%mom2**1.5
-    end function skew
+    end function skewp
 
     function skews(s) result(r)
-      !> computes the current sample skewness of accumulator.
+      !> computes the current sample skewness of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r, s2
-      s2 = skew(s)
-      r = sqrt(real(s%n*(s%n-1), dp))*s2/real(s%n-2, dp)
+      s2 = skewp(s)
+      if (s%n > 2) then
+        r = sqrt(real(s%n*(s%n-1), dp))*s2/real(s%n-2, dp)
+      else
+        r = 0
+      end if
     end function skews
 
-    function kurt(s) result(r)
-      !> computes the current population kurtosis of accumulator.
+    function kurtp(s) result(r)
+      !> computes the current population kurtosis of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
       r = real(s%n, dp)*s%mom4/(s%mom2*s%mom2)-3.0_dp
-    end function
+    end function kurtp
 
     function kurts(s) result(r)
-      !> computes the current sample kurtosis of accumulator.
+      !> computes the current sample kurtosis of the accumulator.
       class(acc), intent(in)       :: s
       real(dp)                     :: r
-      r = real(s%n-1, dp)/real((s%n-2)*(s%n-3), dp)*(real(s%n+1,dp)*kurt(s)+6)
-    end function
+      r = real(s%n-1, dp)/real((s%n-2)*(s%n-3), dp)*(real(s%n+1,dp)*kurtp(s)+6)
+    end function kurts
 
     subroutine show(s)
       !> print stats.
@@ -183,16 +165,16 @@ module stats
       print "(a25)"      , "running stats"
       print "(25a)"      , repeat("-", 25)
       print "(a12, i13)"  , "n:"          , s%n
-      print "(a12, f13.3)", "mean:"       , mean(s)
-      print "(a12, f13.3)", "min:"       , s%min
-      print "(a12, f13.3)", "max:"       , s%max
-      print "(a12, f13.3)", "sum:"       , s%sum
-      print "(a12, f13.3)", "stdev, p:"   , std(s)
-      print "(a12, f13.3)", "stdev, s:"   , stds(s)
-      print "(a12, f13.3)", "skewness, p:", skew(s)
-      print "(a12, f13.3)", "skewness, s:", skews(s)
-      print "(a12, f13.3)", "kurtosis, p:", kurt(s)
-      print "(a12, f13.3)", "kurtosis, s:", kurts(s)
+      print "(a12, f13.3)", "mean:"       , s%mean()
+      print "(a12, f13.3)", "min:"        , s%min
+      print "(a12, f13.3)", "max:"        , s%max
+      print "(a12, f13.3)", "sum:"        , s%sum
+      print "(a12, f13.3)", "stdev, p:"   , s%stdp()
+      print "(a12, f13.3)", "stdev, s:"   , s%stds()
+      print "(a12, f13.3)", "skewness, p:", s%skewp()
+      print "(a12, f13.3)", "skewness, s:", s%skews()
+      print "(a12, f13.3)", "kurtosis, p:", s%kurtp()
+      print "(a12, f13.3)", "kurtosis, s:", s%kurts()
       print "(25a)"      , repeat("-", 25)
     end subroutine show
 
