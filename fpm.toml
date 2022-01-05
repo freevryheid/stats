@@ -1,9 +1,9 @@
 name = "stats"
-version = "0.1.0"
+version = "VERSION"
 license = "MIT"
 author = "Andre Smit"
 maintainer = "freevryheid@gmail.com"
-copyright = "Copyright 2021, Andre Smit"
+copyright = "Copyright 2022, Andre Smit"
 
 [dependencies]
 stdlib.git = "https://github.com/fortran-lang/stdlib"
